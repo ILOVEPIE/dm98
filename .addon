@@ -1,5 +1,5 @@
 {
-		"name": "Deathmatch 98",
+		"name": "Quake 3 Deathmatch 98",
 		"version": "1.0",
 		"sharedassets": "*.*",
 
@@ -16,9 +16,9 @@
 		"gamemodes":
 		[
 				{
-						"name": "dm98",
-						"title": "Deathmatch 98",
-						"description": "Hurt other players more than they hurt you"
+						"name": "q3dm98",
+						"title": "Quake 3 style Deathmatch 98",
+						"description": "Hurt other players more than they hurt you, now with 100% more Quake 3 movement"
 				}
 		]
 }

@@ -19,7 +19,10 @@ partial class DeathmatchPlayer : Player
 	{
 		SetModel( "models/citizen/citizen.vmdl" );
 
-		Controller = new WalkController();
+		Controller = new QuakePlayer()
+		{
+			AutoJump = true
+		};
 		Animator = new StandardPlayerAnimator();
 		Camera = new FirstPersonCamera();
 		  

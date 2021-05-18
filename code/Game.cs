@@ -6,7 +6,7 @@ using System.Linq;
 /// This is the heart of the gamemode. It's responsible
 /// for creating the player and stuff.
 /// </summary>
-[Library( "dm98", Title = "DM98" )]
+[Library( "q3dm98", Title = "Quake 3 DM98" )]
 partial class DeathmatchGame : Game
 {
 	public DeathmatchGame()
