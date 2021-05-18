@@ -162,7 +162,6 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 	{
 		Host.AssertClient();
 
-		Log.Info( $"{EffectEntity} {ViewModelEntity} {IsFirstPersonMode} {CurrentView.Viewer} parent:{Parent}" );
 		Particles.Create( "particles/pistol_muzzleflash.vpcf", EffectEntity, "muzzle" );
 
 		if ( IsLocalPawn )

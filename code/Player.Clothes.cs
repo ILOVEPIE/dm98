@@ -2,6 +2,11 @@
 using System;
 using System.Linq;
 
+public class ClothingEntity : ModelEntity
+{
+
+}
+
 partial class DeathmatchPlayer
 {
 	ModelEntity pants;
@@ -30,7 +35,7 @@ partial class DeathmatchPlayer
 				"models/citizen_clothes/trousers/trousers.lab.vmdl"
 			} );
 
-			pants = new ModelEntity();
+			pants = new ClothingEntity();
 			pants.SetModel( model );
 			pants.SetParent( this, true );
 			pants.EnableShadowInFirstPerson = true;
@@ -49,7 +54,7 @@ partial class DeathmatchPlayer
 				"models/citizen_clothes/gloves/gloves_workgloves.vmdl"
 			} );
 
-			jacket = new ModelEntity();
+			jacket = new ClothingEntity();
 			jacket.SetModel( model );
 			jacket.SetParent( this, true );
 			jacket.EnableShadowInFirstPerson = true;
@@ -58,7 +63,7 @@ partial class DeathmatchPlayer
 
 		if ( Rand.Int( 0, 3 ) != 1 )
 		{
-			shoes = new ModelEntity();
+			shoes = new ClothingEntity();
 			shoes.SetModel( "models/citizen_clothes/shoes/shoes.workboots.vmdl" );
 			shoes.SetParent( this, true );
 			shoes.EnableShadowInFirstPerson = true;
@@ -76,7 +81,7 @@ partial class DeathmatchPlayer
 				"models/citizen_clothes/hair/hair_femalebun.black.vmdl"
 			} );
 
-			hat = new ModelEntity();
+			hat = new ClothingEntity();
 			hat.SetModel( model );
 			hat.SetParent( this, true );
 			hat.EnableShadowInFirstPerson = true;
