@@ -14,16 +14,20 @@ namespace Sandbox
 	public class QuakePlayer : WalkController
 	{
 		float DeAccelRate { get; set; } = 10.0f;
+		float AirDeAccelRate { get; set; } = 10.0f;
 
+		float sideStrafeSpeed = 15;
+
+		float sideStrafeAcceleration = 10;
 
 		public QuakePlayer()
 		{
 			Duck = new Duck( this );
 			Unstuck = new Unstuck( this );
 
-			GroundFriction = 6;
-			AirAcceleration = 2f;
-			AirControl = .03f;
+			//GroundFriction = 6;
+			//AirAcceleration = 2f;
+			//AirControl = .03f;
 		}
 
 		/// <summary>
@@ -368,77 +372,55 @@ namespace Sandbox
 		public override void ApplyFriction( float frictionAmount = 1.0f )
 		{
 
-			if(false)
+			// If we are in water jump cycle, don't apply friction
+			//if ( player->m_flWaterJumpTime )
+			//   return;
+
+			// Not on ground - no friction
+			float speed, newspeed, control;
+			float drop;
+
+			var vec = Velocity;
+			var vel = vec;
+
+			if(GroundEntity != null)
 			{
-				// If we are in water jump cycle, don't apply friction
-				//if ( player->m_flWaterJumpTime )
-				//   return;
-
-				// Not on ground - no friction
-
-
-				// Calculate speed
-				var speed = Velocity.Length;
-				if ( speed < 0.1f ) return;
-				var drop = 0.0f;
-
-
-				if ( GroundEntity != null )
-				{
-					// Bleed off some speed, but if we have less than the bleed
-					//  threshold, bleed the threshold amount.
-					float control = speed < DeAccelRate ? DeAccelRate : speed;
-
-					// Add the amount to the drop amount.
-					drop = control * SurfaceFriction * Time.Tick * frictionAmount;
-				}
-
-				// scale the velocity
-				float newspeed = speed - drop;
-
-				if ( newspeed < 0 )
-					newspeed = 0;
-
-				if ( speed > 0 )
-				{
-					newspeed /= speed;
-				}
-				Velocity *= newspeed;
-
-				// mv->m_outWishVel -= (1.f-newspeed) * mv->m_vecVelocity;
-
-				// If we are in water jump cycle, don't apply friction
-				//if ( player->m_flWaterJumpTime )
-				//   return;
-
-				// Not on ground - no friction
+				vel = new Vector3(Velocity.x, Velocity.y, 0);
 			}
-			else
+
+			speed = vec.Length;
+
+			if(speed < 1)
 			{
+				vel.x = 0;
+				vel.z = 0;
+				Velocity = vel;
+				return;
+			}
 
-				// Calculate speed
-				var speed = Velocity.Length;
-				if ( speed < 0.1f ) return;
+			drop = 0;
 
+			if(GroundEntity != null)
+			{
 				// Bleed off some speed, but if we have less than the bleed
 				//  threshold, bleed the threshold amount.
-				float control = (speed < StopSpeed) ? StopSpeed : speed;
+				control = (speed < StopSpeed) ? StopSpeed : speed;
 
 				// Add the amount to the drop amount.
-				var drop = control * Time.Delta * frictionAmount;
-
-				// scale the velocity
-				float newspeed = speed - drop;
-				if ( newspeed < 0 ) newspeed = 0;
-
-				if ( newspeed != speed )
-				{
-					newspeed /= speed;
-					Velocity *= newspeed;
-				}
-
-				// mv->m_outWishVel -= (1.f-newspeed) * mv->m_vecVelocity;
+				drop = control * Time.Delta * frictionAmount;
 			}
+
+
+			// scale the velocity
+			newspeed = speed - drop;
+			if ( newspeed < 0 ) newspeed = 0;
+
+			if ( newspeed != speed )
+			{
+				newspeed /= speed;
+			}
+			Velocity *= newspeed;
+
 		}
 
 		void CheckJumpButton()
@@ -527,10 +509,36 @@ namespace Sandbox
 
 		public override void AirMove()
 		{
-			var wishdir = WishVelocity.Normal;
-			var wishspeed = WishVelocity.Length;
 
-			Accelerate( wishdir, wishspeed, AirControl, AirAcceleration );
+			var wishdir = WishVelocity.Normal;
+			var wishspeed = wishdir.Length;
+			float accel;
+
+			wishspeed *= WalkSpeed;
+			wishdir = wishdir.Normal;
+
+			float wishspeed2 = wishspeed;
+			if ( Vector3.Dot( Velocity, wishdir ) < 0 )
+			{
+				accel = AirDeAccelRate;
+			}
+			else
+			{
+				accel = AirAcceleration;
+			}
+			if(Velocity.x == 0 && Velocity.y != 0)
+			{
+				if ( wishspeed > sideStrafeSpeed )
+					wishspeed = sideStrafeSpeed;
+				accel = sideStrafeAcceleration;
+			}
+
+			Accelerate( wishdir, wishspeed, AirControl, accel );
+
+			if (AirControl > 0)
+			{
+				airControl(wishdir, wishspeed2);
+			}
 
 			Velocity += BaseVelocity;
 
@@ -538,6 +546,51 @@ namespace Sandbox
 
 			Velocity -= BaseVelocity;
 		}
+		private void airControl( Vector3 wishdir, float wishspeed )
+		{
+			Vector3 playerVelocity = Velocity;
+
+			float zspeed;
+			float speed;
+			float dot;
+			float k;
+
+			// Can't control movement if not moving forward or backward
+			if ( Math.Abs( WishVelocity.Normal.z ) < 0.001 || Math.Abs( wishspeed ) < 0.001 )
+				return;
+
+			zspeed = playerVelocity.z;
+			playerVelocity.z = 0;
+
+
+			speed = playerVelocity.Length;
+			playerVelocity = playerVelocity.Normal;
+
+			dot = Vector3.Dot( playerVelocity, wishdir );
+			k = 32;
+
+			k *= AirControl * dot * dot * Time.Delta;
+
+
+			// Change direction while slowing down
+			if ( dot > 0 )
+			{
+				playerVelocity.x = playerVelocity.x * speed + wishdir.x * k;
+				playerVelocity.y = playerVelocity.y * speed + wishdir.y * k;
+				playerVelocity.z = playerVelocity.z * speed + wishdir.z * k;
+
+				playerVelocity = playerVelocity.Normal;
+
+			}
+
+			playerVelocity.x *= speed;
+			playerVelocity.y *= speed;
+			playerVelocity.z = zspeed; // Note this line
+
+			Velocity = playerVelocity;
+
+		}
+
 
 		public override void WaterMove()
 		{
