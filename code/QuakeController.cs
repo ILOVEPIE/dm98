@@ -20,14 +20,17 @@ namespace Sandbox
 
 		float sideStrafeAcceleration = 10;
 
+		bool wishJump;
+
 		public QuakePlayer()
 		{
 			Duck = new Duck( this );
 			Unstuck = new Unstuck( this );
 
-			//GroundFriction = 6;
-			//AirAcceleration = 2f;
-			//AirControl = .03f;
+			GroundFriction = 6;
+			AirAcceleration = 2f;
+			AirControl = .03f;
+			WalkSpeed = 7;
 		}
 
 		/// <summary>
@@ -118,10 +121,12 @@ namespace Sandbox
             */
 
 			// if ( underwater ) do underwater movement
-
+			wishJump = false;
 			if ( AutoJump ? Input.Down( InputButton.Jump ) : Input.Pressed( InputButton.Jump ) )
 			{
 				CheckJumpButton();
+
+				wishJump = true;
 			}
 
 			// Fricion is handled before we add in any base velocity. That way, if we are on a conveyor, 
@@ -230,14 +235,23 @@ namespace Sandbox
 
 		void WalkMove()
 		{
+
 			var wishdir = WishVelocity.Normal;
 			var wishspeed = WishVelocity.Length;
 
+			if(!wishJump)
+			{
+				ApplyFriction( 1.0f );
+			}
+			else
+			{
+				ApplyFriction(0);
+			}
 			WishVelocity = WishVelocity.WithZ( 0 );
 			WishVelocity = WishVelocity.Normal * wishspeed;
 
 			Velocity = Velocity.WithZ( 0 );
-			Accelerate( wishdir, wishspeed, 0, Acceleration );
+			Accelerate( wishdir, wishspeed, 14);
 			Velocity = Velocity.WithZ( 0 );
 
 			//   Player.SetAnimParam( "forward", Input.Forward );
@@ -344,7 +358,7 @@ namespace Sandbox
 		/// <summary>
 		/// Add our wish direction and speed onto our velocity
 		/// </summary>
-		public override void Accelerate( Vector3 wishdir, float wishspeed, float speedLimit, float acceleration )
+		public void Accelerate( Vector3 wishdir, float wishspeed, float acceleration )
 		{
 			// See if we are changing direction a bit
 			var currentspeed = Velocity.Dot( wishdir );
@@ -366,6 +380,40 @@ namespace Sandbox
 			Velocity += wishdir * accelspeed;
 		}
 
+
+		/// <summary>
+		/// Add our wish direction and speed onto our velocity
+		/// </summary>
+		public override void Accelerate( Vector3 wishdir, float wishspeed, float speedLimit, float acceleration )
+		{
+			// This gets overridden because some games (CSPort) want to allow dead (observer) players
+			// to be able to move around.
+			// if ( !CanAccelerate() )
+			//     return;
+
+			if ( speedLimit > 0 && wishspeed > speedLimit )
+				wishspeed = speedLimit;
+
+			// See if we are changing direction a bit
+			var currentspeed = Velocity.Dot( wishdir );
+
+			// Reduce wishspeed by the amount of veer.
+			var addspeed = wishspeed - currentspeed;
+
+			// If not going to add any speed, done.
+			if ( addspeed <= 0 )
+				return;
+
+			// Determine amount of acceleration.
+			var accelspeed = acceleration * Time.Delta * wishspeed * SurfaceFriction;
+
+			// Cap at addspeed
+			if ( accelspeed > addspeed )
+				accelspeed = addspeed;
+
+			Velocity += wishdir * accelspeed;
+		}
+
 		/// <summary>
 		/// Remove ground friction from velocity
 		/// </summary>
@@ -381,20 +429,17 @@ namespace Sandbox
 			float drop;
 
 			var vec = Velocity;
-			var vel = vec;
 
 			if(GroundEntity != null)
 			{
-				vel = new Vector3(Velocity.x, Velocity.y, 0);
+				Velocity = new Vector3(Velocity.x, Velocity.y, 0);
 			}
 
 			speed = vec.Length;
 
 			if(speed < 1)
 			{
-				vel.x = 0;
-				vel.z = 0;
-				Velocity = vel;
+				Velocity = new Vector3(0, Velocity.y, 0);
 				return;
 			}
 
@@ -425,19 +470,6 @@ namespace Sandbox
 
 		void CheckJumpButton()
 		{
-			//if ( !player->CanJump() )
-			//    return false;
-
-
-			/*
-            if ( player->m_flWaterJumpTime )
-            {
-                player->m_flWaterJumpTime -= gpGlobals->frametime();
-                if ( player->m_flWaterJumpTime < 0 )
-                    player->m_flWaterJumpTime = 0;
-
-                return false;
-            }*/
 
 
 
@@ -463,22 +495,8 @@ namespace Sandbox
 			if ( GroundEntity == null )
 				return;
 
-			/*
-            if ( player->m_Local.m_bDucking && (player->GetFlags() & FL_DUCKING) )
-                return false;
-            */
-
-			/*
-            // Still updating the eye position.
-            if ( player->m_Local.m_nDuckJumpTimeMsecs > 0u )
-                return false;
-            */
 
 			ClearGroundEntity();
-
-			// player->PlayStepSound( (Vector &)mv->GetAbsOrigin(), player->m_pSurfaceData, 1.0, true );
-
-			// MoveHelper()->PlayerSetAnimation( PLAYER_JUMP );
 
 			float flGroundFactor = 1.0f;
 			//if ( player->m_pSurfaceData )
@@ -496,12 +514,6 @@ namespace Sandbox
 			Velocity = Velocity.WithZ( startz + flMul * flGroundFactor );
 
 			Velocity -= new Vector3( 0, 0, Gravity * 0.5f ) * Time.Delta;
-
-			// mv->m_outJumpVel.z += mv->m_vecVelocity[2] - startz;
-			// mv->m_outStepHeight += 0.15f;
-
-			// don't jump again until released
-			//mv->m_nOldButtons |= IN_JUMP;
 
 			AddEvent( "jump" );
 
@@ -533,7 +545,7 @@ namespace Sandbox
 				accel = sideStrafeAcceleration;
 			}
 
-			Accelerate( wishdir, wishspeed, AirControl, accel );
+			Accelerate( wishdir, wishspeed, accel );
 
 			if (AirControl > 0)
 			{
