@@ -27,10 +27,11 @@ namespace Sandbox
 			Duck = new Duck( this );
 			Unstuck = new Unstuck( this );
 
-			GroundFriction = 6;
-			AirAcceleration = 2f;
+			//GroundFriction = 6;
+			//AirAcceleration = 2f;
 			AirControl = .03f;
-			WalkSpeed = 7;
+			//WalkSpeed = 7;
+			AutoJump = true;
 		}
 
 		/// <summary>

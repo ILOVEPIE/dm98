@@ -176,10 +176,10 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 	/// <summary>
 	/// Shoot a single bullet
 	/// </summary>
-	public virtual void ShootBullet( float spread, float force, float damage, float bulletSize )
+	public virtual void ShootBullet( float spread, float force, float damage, float bulletSize, float BulletCount = 0 )
 	{
 		var forward = Owner.EyeRot.Forward;
-		forward += (Vector3.Random + Vector3.Random + Vector3.Random + Vector3.Random) * spread * 0.25f;
+		forward += (RandVec3(BulletCount) + RandVec3(BulletCount) + RandVec3(BulletCount) + RandVec3(BulletCount)) * spread * 0.25f;
 		forward = forward.Normal;
 
 		//
@@ -189,6 +189,7 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 		foreach ( var tr in TraceBullet( Owner.EyePos, Owner.EyePos + forward * 5000, bulletSize ) )
 		{
 			tr.Surface.DoBulletImpact( tr );
+			DebugOverlay.Line( tr.StartPos, tr.EndPos, Host.IsServer ? Color.Yellow : Color.Blue, 5f );
 
 			if ( !IsServer ) continue;
 			if ( !tr.Entity.IsValid() ) continue;
@@ -206,6 +207,15 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 				tr.Entity.TakeDamage( damageInfo );
 			}
 		}
+	}
+
+	Vector3 RandVec3(float seed = 0)
+	{
+		float curtime = Time.Now * 1000 + seed;
+		Random rand = new Random( (int)curtime );
+
+		rand.Next();
+		return new Vector3( ((float)rand.NextDouble() - .5f) * 2, ((float)rand.NextDouble() - .5f) * 2, ((float)rand.NextDouble() - .5f) * 2 );
 	}
 
 	public bool TakeAmmo( int amount )
