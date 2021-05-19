@@ -13,42 +13,17 @@ namespace Sandbox
 {
 	public class QuakePlayer : WalkController
 	{
-
-		public float SprintSpeed { get; set; } = 320.0f;
-		public float WalkSpeed { get; set; } = 150.0f;
-		public float DefaultSpeed { get; set; } = 190.0f;
-		public float Acceleration { get; set; } = 10.0f;
-		public float AirAcceleration { get; set; } = 50.0f;
-		public float FallSoundZ { get; set; } = -30.0f;
-		public float GroundFriction { get; set; } = 4.0f;
-		public float StopSpeed { get; set; } = 100.0f;
-		public float Size { get; set; } = 20.0f;
-		public float DistEpsilon { get; set; } = 0.03125f;
-		public float GroundAngle { get; set; } = 46.0f;
-		public float Bounce { get; set; } = 0.0f;
-		public float MoveFriction { get; set; } = 1.0f;
-		public float StepSize { get; set; } = 18.0f;
-		public float MaxNonJumpVelocity { get; set; } = 140.0f;
-		public float BodyGirth { get; set; } = 32.0f;
-		public float BodyHeight { get; set; } = 72.0f;
-		public float EyeHeight { get; set; } = 64.0f;
-		public float Gravity { get; set; } = 800.0f;
-		public float AirControl { get; set; } = 30.0f;
-
-		public float runDeacceleration = 10.0f;
-
-		public bool Swimming { get; set; } = false;
-		public bool AutoJump { get; set; } = false;
-
-
-		public Duck Duck;
-		public Unstuck Unstuck;
+		float DeAccelRate { get; set; } = 10.0f;
 
 
 		public QuakePlayer()
 		{
 			Duck = new Duck( this );
 			Unstuck = new Unstuck( this );
+
+			GroundFriction = 6;
+			AirAcceleration = 2f;
+			AirControl = .03f;
 		}
 
 		/// <summary>
@@ -63,15 +38,7 @@ namespace Sandbox
 			return new BBox( mins, maxs );
 		}
 
-
-		// Duck body height 32
-		// Eye Height 64
-		// Duck Eye Height 28
-
-		protected Vector3 mins;
-		protected Vector3 maxs;
-
-		public virtual void SetBBox( Vector3 mins, Vector3 maxs )
+		public override void SetBBox( Vector3 mins, Vector3 maxs )
 		{
 			if ( this.mins == mins && this.maxs == maxs )
 				return;
@@ -79,8 +46,6 @@ namespace Sandbox
 			this.mins = mins;
 			this.maxs = maxs;
 		}
-
-		protected float SurfaceFriction;
 
 
 		public override void FrameSimulate()
@@ -248,7 +213,7 @@ namespace Sandbox
 
 		}
 
-		public virtual float GetWishSpeed()
+		public override float GetWishSpeed()
 		{
 			var ws = Duck.GetWishSpeed();
 			if ( ws >= 0 ) return ws;
@@ -263,15 +228,6 @@ namespace Sandbox
 		{
 			var wishdir = WishVelocity.Normal;
 			var wishspeed = WishVelocity.Length;
-
-			if( Input.Down( InputButton.Jump ) )
-			{
-				ApplyFriction( 1.0f );
-			}
-			else
-			{
-				ApplyFriction( 0.0f );
-			}
 
 			WishVelocity = WishVelocity.WithZ( 0 );
 			WishVelocity = WishVelocity.Normal * wishspeed;
@@ -384,55 +340,105 @@ namespace Sandbox
 		/// <summary>
 		/// Add our wish direction and speed onto our velocity
 		/// </summary>
-		public virtual void Accelerate( Vector3 wishdir, float wishspeed, float speedLimit, float acceleration )
+		public override void Accelerate( Vector3 wishdir, float wishspeed, float speedLimit, float acceleration )
 		{
+			// See if we are changing direction a bit
+			var currentspeed = Velocity.Dot( wishdir );
 
-			float addspeed;
-			float accelspeed;
-			float currentspeed;
-
-			currentspeed = Vector3.Dot( Velocity, wishdir );
-			addspeed = wishspeed - currentspeed;
+			// Reduce wishspeed by the amount of veer.
+			var addspeed = wishspeed - currentspeed;
 
 			if ( addspeed <= 0 )
+			{
 				return;
+			}
 
-			accelspeed = acceleration * Time.Tick * wishspeed;
+			// Determine amount of acceleration.
+			var accelspeed = acceleration * Time.Delta * wishspeed;
+			
 			if ( accelspeed > addspeed )
 				accelspeed = addspeed;
 
-			Velocity = new Vector3(Velocity.x + accelspeed * wishdir.x, Velocity.y, Velocity.z + accelspeed * wishdir.z );
+			Velocity += wishdir * accelspeed;
 		}
 
 		/// <summary>
 		/// Remove ground friction from velocity
 		/// </summary>
-		public virtual void ApplyFriction( float frictionAmount = 1.0f )
+		public override void ApplyFriction( float frictionAmount = 1.0f )
 		{
-			Vector3 vec = Velocity; // Equivalent to: VectorCopy();
-			float speed;
-			float newspeed;
-			float control;
-			float drop;
 
-			vec.y = 0.0f;
-			speed = vec.Length;
-			drop = 0.0f;
-
-			if(GroundEntity != null)
+			if(false)
 			{
-				control = speed < runDeacceleration ? runDeacceleration : speed;
-				drop = control * MoveFriction * Time.Tick * frictionAmount;
+				// If we are in water jump cycle, don't apply friction
+				//if ( player->m_flWaterJumpTime )
+				//   return;
+
+				// Not on ground - no friction
+
+
+				// Calculate speed
+				var speed = Velocity.Length;
+				if ( speed < 0.1f ) return;
+				var drop = 0.0f;
+
+
+				if ( GroundEntity != null )
+				{
+					// Bleed off some speed, but if we have less than the bleed
+					//  threshold, bleed the threshold amount.
+					float control = speed < DeAccelRate ? DeAccelRate : speed;
+
+					// Add the amount to the drop amount.
+					drop = control * SurfaceFriction * Time.Tick * frictionAmount;
+				}
+
+				// scale the velocity
+				float newspeed = speed - drop;
+
+				if ( newspeed < 0 )
+					newspeed = 0;
+
+				if ( speed > 0 )
+				{
+					newspeed /= speed;
+				}
+				Velocity *= newspeed;
+
+				// mv->m_outWishVel -= (1.f-newspeed) * mv->m_vecVelocity;
+
+				// If we are in water jump cycle, don't apply friction
+				//if ( player->m_flWaterJumpTime )
+				//   return;
+
+				// Not on ground - no friction
 			}
+			else
+			{
 
-			newspeed = speed - drop;
+				// Calculate speed
+				var speed = Velocity.Length;
+				if ( speed < 0.1f ) return;
 
-			if ( newspeed < 0 )
-				newspeed = 0;
-			if ( speed > 0 )
-				newspeed /= speed;
+				// Bleed off some speed, but if we have less than the bleed
+				//  threshold, bleed the threshold amount.
+				float control = (speed < StopSpeed) ? StopSpeed : speed;
 
-			Velocity = new Vector3( Velocity.x * newspeed, Velocity.y, Velocity.x * newspeed);
+				// Add the amount to the drop amount.
+				var drop = control * Time.Delta * frictionAmount;
+
+				// scale the velocity
+				float newspeed = speed - drop;
+				if ( newspeed < 0 ) newspeed = 0;
+
+				if ( newspeed != speed )
+				{
+					newspeed /= speed;
+					Velocity *= newspeed;
+				}
+
+				// mv->m_outWishVel -= (1.f-newspeed) * mv->m_vecVelocity;
+			}
 		}
 
 		void CheckJumpButton()
@@ -519,7 +525,7 @@ namespace Sandbox
 
 		}
 
-		public virtual void AirMove()
+		public override void AirMove()
 		{
 			var wishdir = WishVelocity.Normal;
 			var wishspeed = WishVelocity.Length;
@@ -533,7 +539,7 @@ namespace Sandbox
 			Velocity -= BaseVelocity;
 		}
 
-		public virtual void WaterMove()
+		public override void WaterMove()
 		{
 			var wishdir = WishVelocity.Normal;
 			var wishspeed = WishVelocity.Length;
@@ -552,7 +558,7 @@ namespace Sandbox
 		bool IsTouchingLadder = false;
 		Vector3 LadderNormal;
 
-		public virtual void CheckLadder()
+		public override void CheckLadder()
 		{
 			if ( IsTouchingLadder && Input.Pressed( InputButton.Jump ) )
 			{
@@ -582,7 +588,7 @@ namespace Sandbox
 			}
 		}
 
-		public virtual void LadderMove()
+		public override void LadderMove()
 		{
 			var velocity = WishVelocity;
 			float normalDot = velocity.Dot( LadderNormal );
@@ -592,7 +598,7 @@ namespace Sandbox
 			TryPlayerMove();
 		}
 
-		public virtual void TryPlayerMove()
+		public override void TryPlayerMove()
 		{
 			MoveHelper mover = new MoveHelper( Position, Velocity );
 			mover.Trace = mover.Trace.Size( mins, maxs ).Ignore( Pawn );
@@ -668,7 +674,7 @@ namespace Sandbox
 		/// <summary>
 		/// We have a new ground entity
 		/// </summary>
-		public virtual void UpdateGroundEntity( TraceResult tr )
+		public override void UpdateGroundEntity( TraceResult tr )
 		{
 			GroundNormal = tr.Normal;
 
@@ -706,7 +712,7 @@ namespace Sandbox
 		/// <summary>
 		/// We're no longer on the ground, remove it
 		/// </summary>
-		public virtual void ClearGroundEntity()
+		public override void ClearGroundEntity()
 		{
 			if ( GroundEntity == null ) return;
 
@@ -728,7 +734,7 @@ namespace Sandbox
 		/// <summary>
 		/// Try to keep a walking player on the ground when running down slopes etc
 		/// </summary>
-		public virtual void StayOnGround()
+		public override void StayOnGround()
 		{
 			var start = Position + Vector3.Up * 2;
 			var end = Position + Vector3.Down * StepSize;

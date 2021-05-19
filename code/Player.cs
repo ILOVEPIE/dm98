@@ -198,11 +198,11 @@ partial class DeathmatchPlayer : Player
 		setup.Position += left * MathF.Sin( walkBob * 0.6f ) * speed * 1;
 
 		// Camera lean
-		lean = lean.LerpTo( Velocity.Dot( setup.Rotation.Right ) * 0.03f, Time.Delta * 15.0f );
+		//lean = lean.LerpTo( Velocity.Dot( setup.Rotation.Right ) * 0.03f, Time.Delta * 15.0f );
 
 		var appliedLean = lean;
 		appliedLean += MathF.Sin( walkBob ) * speed * 0.2f;
-		setup.Rotation *= Rotation.From( 0, 0, appliedLean );
+		//setup.Rotation *= Rotation.From( 0, 0, appliedLean );
 
 		speed = (speed - 0.7f).Clamp( 0, 1 ) * 3.0f;
 
