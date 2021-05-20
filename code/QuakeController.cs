@@ -20,7 +20,7 @@ namespace Sandbox
 			PitchRandom = 0f,
 			UI = false,
 			Volume = 0.25f,
-			DistanceMax = 700f,
+			DistanceMax = 4000f,
 		};
 
 		float DeAccelRate { get; set; } = 10.0f;
@@ -38,7 +38,7 @@ namespace Sandbox
 			Unstuck = new Unstuck( this );
 
 			GroundFriction = 6;
-			//AirAcceleration = 2f;
+			AirAcceleration = 2f;
 			AirControl = .03f;
 			//WalkSpeed = 7;
 			AutoJump = true;
