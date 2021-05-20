@@ -15,6 +15,8 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 	public virtual int Bucket => 1;
 	public virtual int BucketWeight => 100;
 
+	Random rand = new Random( 70 );
+
 	[NetPredicted]
 	public int AmmoClip { get; set; }
 
@@ -162,7 +164,10 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 	{
 		Host.AssertClient();
 
-		Particles.Create( "particles/pistol_muzzleflash.vpcf", EffectEntity, "muzzle" );
+		var particle = Particles.Create( "particles/pistol_muzzleflash.vpcf", EffectEntity, "muzzle" );
+		var Light = new Light( EffectEntity.Position, 1000, Color.Yellow * 100 );
+		//EffectEntity.AddChild(Light);
+
 
 		if ( IsLocalPawn )
 		{
@@ -171,6 +176,15 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 
 		ViewModelEntity?.SetAnimParam( "fire", true );
 		CrosshairPanel?.OnEvent( "fire" );
+		
+		HandleLight(Light);
+	}
+
+	public async Task HandleLight( Light ourLight )
+	{
+		await Task.DelaySeconds( .5f );
+		ourLight.Delete();
+
 	}
 
 	/// <summary>
@@ -179,7 +193,7 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 	public virtual void ShootBullet( float spread, float force, float damage, float bulletSize, float BulletCount = 0 )
 	{
 		var forward = Owner.EyeRot.Forward;
-		forward += (RandVec3(BulletCount) * spread * 0.25f);
+		forward += (RandVec3( BulletCount) * spread * 0.25f);
 		forward = forward.Normal;
 
 		//
@@ -211,8 +225,6 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 
 	Vector3 RandVec3(float seed = 0)
 	{
-		float curtime = Time.Now * 1000 + seed;
-		Random rand = new Random( (int)curtime );
 		return new Vector3( ((float)rand.NextDouble() - .5f) * 2, ((float)rand.NextDouble() - .5f) * 2, ((float)rand.NextDouble() - .5f) * 2 );
 	}
 

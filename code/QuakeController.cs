@@ -13,6 +13,16 @@ namespace Sandbox
 {
 	public class QuakePlayer : WalkController
 	{
+
+		public static readonly SoundEvent JumpSounds = new( "sounds/Q2/Player/jump/jump1.vsnd" )
+		{
+			Pitch = 1f,
+			PitchRandom = 0f,
+			UI = false,
+			Volume = 0.25f,
+			DistanceMax = 700f,
+		};
+
 		float DeAccelRate { get; set; } = 10.0f;
 		float AirDeAccelRate { get; set; } = 10.0f;
 
@@ -28,7 +38,7 @@ namespace Sandbox
 			Unstuck = new Unstuck( this );
 
 			GroundFriction = 6;
-			AirAcceleration = 2f;
+			//AirAcceleration = 2f;
 			AirControl = .03f;
 			//WalkSpeed = 7;
 			AutoJump = true;
@@ -514,6 +524,7 @@ namespace Sandbox
 			Velocity -= new Vector3( 0, 0, Gravity * 0.5f ) * Time.Delta;
 
 			AddEvent( "jump" );
+			Pawn.PlaySound( JumpSounds.Name );
 
 		}
 
