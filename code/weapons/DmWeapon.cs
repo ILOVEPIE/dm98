@@ -179,7 +179,7 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 	public virtual void ShootBullet( float spread, float force, float damage, float bulletSize, float BulletCount = 0 )
 	{
 		var forward = Owner.EyeRot.Forward;
-		forward += (RandVec3(BulletCount) + RandVec3(BulletCount) + RandVec3(BulletCount) + RandVec3(BulletCount)) * spread * 0.25f;
+		forward += (RandVec3(BulletCount) * spread * 0.25f);
 		forward = forward.Normal;
 
 		//
@@ -213,8 +213,6 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 	{
 		float curtime = Time.Now * 1000 + seed;
 		Random rand = new Random( (int)curtime );
-
-		rand.Next();
 		return new Vector3( ((float)rand.NextDouble() - .5f) * 2, ((float)rand.NextDouble() - .5f) * 2, ((float)rand.NextDouble() - .5f) * 2 );
 	}
 

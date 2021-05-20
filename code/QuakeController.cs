@@ -27,8 +27,8 @@ namespace Sandbox
 			Duck = new Duck( this );
 			Unstuck = new Unstuck( this );
 
-			//GroundFriction = 6;
-			//AirAcceleration = 2f;
+			GroundFriction = 6;
+			AirAcceleration = 2f;
 			AirControl = .03f;
 			//WalkSpeed = 7;
 			AutoJump = true;
@@ -126,8 +126,6 @@ namespace Sandbox
 			if ( AutoJump ? Input.Down( InputButton.Jump ) : Input.Pressed( InputButton.Jump ) )
 			{
 				CheckJumpButton();
-
-				wishJump = true;
 			}
 
 			// Fricion is handled before we add in any base velocity. That way, if we are on a conveyor, 
@@ -472,7 +470,7 @@ namespace Sandbox
 		void CheckJumpButton()
 		{
 
-
+			wishJump = true;
 
 			// If we are in the water most of the way...
 			if ( Swimming )
@@ -495,7 +493,6 @@ namespace Sandbox
 
 			if ( GroundEntity == null )
 				return;
-
 
 			ClearGroundEntity();
 
