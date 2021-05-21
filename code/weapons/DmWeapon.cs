@@ -186,7 +186,8 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 		ourLight.Delete();
 
 	}
-
+	
+	
 	/// <summary>
 	/// Shoot a single bullet
 	/// </summary>
@@ -202,14 +203,14 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 		//
 		foreach ( var tr in TraceBullet( Owner.EyePos, Owner.EyePos + forward * 5000, bulletSize ) )
 		{
-			tr.Surface.DoBulletImpact( tr );
+			BulletImpact( tr );
 			DebugOverlay.Line( tr.StartPos, tr.EndPos, Host.IsServer ? Color.Yellow : Color.Blue, 5f );
 
 			if ( !IsServer ) continue;
 			if ( !tr.Entity.IsValid() ) continue;
 
 			//
-			// We turn predictiuon off for this, so any exploding effects don't get culled etc
+			// We turn prediction off for this, so any exploding effects don't get culled etc
 			//
 			using ( Prediction.Off() )
 			{
@@ -220,6 +221,48 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 
 				tr.Entity.TakeDamage( damageInfo );
 			}
+		}
+	}
+
+	//[ClientRpc]
+	void BulletImpact(TraceResult tr)
+	{
+		//
+		// No effects on resimulate
+		//
+		if ( !Prediction.FirstTime ) 
+			return;
+
+		//
+		// Drop a decal
+		//
+		var decalPath = Rand.FromArray( tr.Surface.ImpactEffects.BulletDecal );
+		if ( decalPath != null )
+		{
+			if ( DecalDefinition.ByPath.TryGetValue( decalPath, out var decal ) )
+			{
+				decal.PlaceUsingTrace( tr );
+			}
+		}
+
+		//
+		// Make an impact sound
+		//
+		if ( !string.IsNullOrWhiteSpace( tr.Surface.Sounds.Bullet ) )
+		{
+			Sound.FromWorld( tr.Surface.Sounds.Bullet, tr.EndPos );
+		}
+
+		//
+		// Get us a particle effect
+		//
+		string particleName = Rand.FromArray( tr.Surface.ImpactEffects.Bullet );
+		if ( particleName  == null ) particleName = Rand.FromArray( tr.Surface.ImpactEffects.Regular );
+
+		if ( particleName != null )
+		{
+			var ps = Particles.Create( particleName, tr.EndPos );
+			ps.SetForward( 0, tr.Normal );
 		}
 	}
 
