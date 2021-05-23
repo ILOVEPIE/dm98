@@ -22,10 +22,11 @@ partial class DmInventory : BaseInventory
 		//
 		if ( weapon != null && IsCarryingType( ent.GetType() ) )
 		{
-			var ammo = weapon.AmmoClip;
+			//var ammo = weapon.AmmoClip;
 			var ammoType = weapon.AmmoType;
 
-			if ( ammo > 0 )
+			/*
+			 if ( ammo > 0 )
 			{
 				player.GiveAmmo( ammoType, ammo );
 
@@ -34,7 +35,8 @@ partial class DmInventory : BaseInventory
 					Sound.FromWorld( "dm.pickup_ammo", ent.Position );
 					PickupFeed.OnPickup( To.Single( player ), $"+{ammo} {ammoType}" );
 				}
-			}
+			} 
+			*/
 
 			ItemRespawn.Taken( ent );
 
@@ -46,7 +48,7 @@ partial class DmInventory : BaseInventory
 		if ( weapon != null && notices )
 		{
 			Sound.FromWorld( "dm.pickup_weapon", ent.Position );
-			PickupFeed.OnPickup( To.Single( player ), $"{ent.ClassInfo.Title}" ); 
+			//PickupFeed.OnPickup( To.Single( player ), $"{ent.ClassInfo.Title}" ); 
 		}
 
 

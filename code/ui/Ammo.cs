@@ -23,10 +23,10 @@ public class Ammo : Panel
 		SetClass( "active", weapon != null );
 
 		if ( weapon == null ) return;
-
+			
 		Weapon.Text = $"{weapon.AmmoClip}";
 
-		var inv = weapon.AvailableAmmo();
+		var inv = 0;
 		Inventory.Text = $" / {inv}";
 		Inventory.SetClass( "active", inv >= 0 );
 	}

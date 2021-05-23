@@ -9,7 +9,6 @@ partial class Shotgun : BaseDmWeapon
 	public override float SecondaryRate => 1;
 	public override AmmoType AmmoType => AmmoType.Buckshot;
 	public override int ClipSize => 8;
-	public override float ReloadTime => 0.5f;
 	public override int Bucket => 2;
 
 	public override void Spawn()
@@ -17,7 +16,7 @@ partial class Shotgun : BaseDmWeapon
 		base.Spawn();
 
 		SetModel( "weapons/rust_pumpshotgun/rust_pumpshotgun.vmdl" );  
-
+		
 		AmmoClip = 6;
 	}
 
@@ -109,41 +108,6 @@ partial class Shotgun : BaseDmWeapon
 		{
 			new Sandbox.ScreenShake.Perlin(3.0f, 3.0f, 3.0f);
 		}
-	}
-
-	public override void OnReloadFinish()
-	{
-		IsReloading = false;
-
-		TimeSincePrimaryAttack = 0;
-		TimeSinceSecondaryAttack = 0;
-
-		if ( AmmoClip >= ClipSize )
-			return;
-
-		if ( Owner is DeathmatchPlayer player )
-		{
-			var ammo = player.TakeAmmo( AmmoType, 1 );
-			if ( ammo == 0 )
-				return;
-
-			AmmoClip += ammo;
-
-			if ( AmmoClip < ClipSize )
-			{
-				Reload();
-			}
-			else
-			{
-				FinishReload();
-			}
-		}
-	}
-
-	[ClientRpc]
-	protected virtual void FinishReload()
-	{
-		ViewModelEntity?.SetAnimParam( "reload_finished", true );
 	}
 
 	public override void SimulateAnimator( PawnAnimator anim )

@@ -8,7 +8,6 @@ partial class Pistol : BaseDmWeapon
 
 	public override float PrimaryRate => 15.0f;
 	public override float SecondaryRate => 1.0f;
-	public override float ReloadTime => 3.0f;
 
 	public override int Bucket => 1;
 
@@ -17,6 +16,7 @@ partial class Pistol : BaseDmWeapon
 		base.Spawn();
 
 		SetModel( "weapons/rust_pistol/rust_pistol.vmdl" );
+		
 		AmmoClip = 12;
 	}
 

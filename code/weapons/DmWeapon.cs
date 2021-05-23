@@ -21,9 +21,6 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 	public int AmmoClip { get; set; }
 
 	[Net, Predicted]
-	public TimeSince TimeSinceReload { get; set; }
-
-	[Net, Predicted]
 	public bool IsReloading { get; set; }
 
 	[Net, Predicted]
@@ -60,31 +57,6 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 		PickupTrigger.Position = Position;
 	}
 
-	public override void Reload()
-	{
-		if ( IsReloading )
-			return;
-
-		if ( AmmoClip >= ClipSize )
-			return;
-
-		TimeSinceReload = 0;
-
-		if ( Owner is DeathmatchPlayer player )
-		{
-			if ( player.AmmoCount( AmmoType ) <= 0 )
-				return;
-
-			StartReloadEffects();
-		}
-
-		IsReloading = true;
-
-		(Owner as AnimEntity).SetAnimParam( "b_reload", true );
-
-		StartReloadEffects();
-	}
-
 	public override void Simulate( Client owner ) 
 	{
 		if ( TimeSinceDeployed < 0.6f )
@@ -94,33 +66,6 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 		{
 			base.Simulate( owner );
 		}
-
-		if ( IsReloading && TimeSinceReload > ReloadTime )
-		{
-			OnReloadFinish();
-		}
-	}
-
-	public virtual void OnReloadFinish()
-	{
-		IsReloading = false;
-
-		if ( Owner is DeathmatchPlayer player )
-		{
-			var ammo = player.TakeAmmo( AmmoType, ClipSize - AmmoClip );
-			if ( ammo == 0 )
-				return;
-
-			AmmoClip += ammo;
-		}
-	}
-
-	[ClientRpc]
-	public virtual void StartReloadEffects()
-	{
-		ViewModelEntity?.SetAnimParam( "reload", true );
-
-		// TODO - player third person model reload
 	}
 
 	public override void AttackPrimary()
@@ -273,11 +218,12 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 
 	public bool TakeAmmo( int amount )
 	{
-		if ( AmmoClip < amount )
-			return false;
-
-		AmmoClip -= amount;
-		return true;
+		if ( AmmoClip >= amount )
+		{
+			AmmoClip -= amount;
+			return true;	
+		}
+		return false;
 	}
 
 	[ClientRpc]
@@ -311,7 +257,6 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 
 	public bool IsUsable()
 	{
-		if ( AmmoClip > 0 ) return true;
 		return AvailableAmmo() > 0;
 	}
 
