@@ -17,16 +17,16 @@ partial class BaseDmWeapon : BaseWeapon, IRespawnableEntity
 
 	Random rand = new Random( 70 );
 
-	[NetPredicted]
+	[Net, Predicted]
 	public int AmmoClip { get; set; }
 
-	[NetPredicted]
+	[Net, Predicted]
 	public TimeSince TimeSinceReload { get; set; }
 
-	[NetPredicted]
+	[Net, Predicted]
 	public bool IsReloading { get; set; }
 
-	[NetPredicted]
+	[Net, Predicted]
 	public TimeSince TimeSinceDeployed { get; set; }
 
 
