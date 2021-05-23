@@ -26,38 +26,30 @@ namespace Sandbox
 		float DeAccelRate { get; set; } = 10.0f;
 		float AirDeAccelRate { get; set; } = 10.0f;
 
-		float WaterFriction { get; set; } = 1.0f;
-		
+		bool _wishjump;
 
-		bool wishJump;
-		
+		float WaterFriction { get; set; } = 1.0f;
 
 		public QuakePlayer()
 		{
 			Duck = new Duck( this );
 			Unstuck = new Unstuck( this );
 
-			GroundFriction = 6;
-			AirAcceleration = 1f;
-			AirControl = 0f;
+			//GroundFriction = 6;
+			//AirAcceleration = 2f;
+			//AirControl = .0f;
 			//WalkSpeed = 7;
 			AutoJump = true;
 		}
 
 
 
-		public override void Simulate()
-		{
-			var ground = GroundEntity;
-			base.Simulate();
 
-			if(ground != GroundEntity && GroundEntity == null && Input.Down(InputButton.Jump))
-			{
-				Pawn.PlaySound(JumpSounds.Name);
-			}
 
-		}
-		
+
+
+
+
 		/// <summary>
 		/// This is temporary, get the hull size for the player's collision
 		/// </summary>
@@ -87,35 +79,28 @@ namespace Sandbox
 			EyeRot = Input.Rotation;
 		}
 
-		void WalkMove()
+		public override void Simulate()
 		{
+			Entity ground = GroundEntity;
+			
+			_wishjump = ground == GroundEntity && Input.Down( InputButton.Jump );
+
+			base.Simulate();
+			if(ground != GroundEntity && GroundEntity == null && Input.Down(InputButton.Jump))
+			{
+				//Pawn.PlaySound(JumpSounds.Name);
+			}
+		}
+
+		public override void WalkMove()
+		{
+			
 			var wishdir = WishVelocity.Normal;
-			var wishspeed = WishVelocity.Length;
-
-			if(!wishJump)
-			{
-				ApplyFriction( 1.0f );
-			}
-			else
-			{
-				ApplyFriction(0);
-			}
-			WishVelocity = WishVelocity.WithZ( 0 );
-			WishVelocity = WishVelocity.Normal * wishspeed;
-
-			Velocity = Velocity.WithZ( 0 );
-			Accelerate( wishdir, wishspeed, 14);
-			Velocity = Velocity.WithZ( 0 );
-
-			//   Player.SetAnimParam( "forward", Input.Forward );
-			//   Player.SetAnimParam( "sideward", Input.Right );
-			//   Player.SetAnimParam( "wishspeed", wishspeed );
-			//    Player.SetAnimParam( "walkspeed_scale", 2.0f / 190.0f );
-			//   Player.SetAnimParam( "runspeed_scale", 2.0f / 320.0f );
-
-			//  DebugOverlay.Text( 0, Pos + Vector3.Up * 100, $"forward: {Input.Forward}\nsideward: {Input.Right}" );
-
-			// Add in any base velocity to the current velocity.
+			var wishspeed = wishdir.Length * WishVelocity.Length;
+			
+			
+			ApplyFriction();	
+			Accelerate( wishdir, wishspeed, Acceleration);
 			Velocity += BaseVelocity;
 
 			try
@@ -198,7 +183,7 @@ namespace Sandbox
 
 			if(speed < 1)
 			{
-				Velocity = new Vector3(0, Velocity.y, 0);
+				Velocity = Velocity.WithZ(0);
 				return;
 			}
 
@@ -372,6 +357,8 @@ namespace Sandbox
 
 			Velocity -= BaseVelocity;
 		}
+
+
 
 	}
 }

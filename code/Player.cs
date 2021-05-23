@@ -6,12 +6,15 @@ using System.Threading;
 
 partial class DeathmatchPlayer : Player
 {
+	[ConsoleVariable( "desired_fov" )] 
+	int FieldOfView { get; set; } = 80;
 	TimeSince timeSinceDropped;
 
 	public bool SupressPickupNotices { get; private set; }
 
 	public DeathmatchPlayer()
 	{
+		FieldOfView = 80;
 		Inventory = new DmInventory( this );
 	}
 
@@ -25,7 +28,7 @@ partial class DeathmatchPlayer : Player
 		};
 		Animator = new StandardPlayerAnimator();
 		Camera = new FirstPersonCamera();
-		  
+
 		EnableAllCollisions = true; 
 		EnableDrawing = true; 
 		EnableHideInFirstPerson = true;
@@ -208,7 +211,7 @@ partial class DeathmatchPlayer : Player
 
 		fov = fov.LerpTo( speed * 20 * MathF.Abs( forwardspeed ), Time.Delta * 2.0f );
 
-		setup.FieldOfView += fov;
+		setup.FieldOfView = FieldOfView;
 
 	//	var tx = new Sandbox.UI.PanelTransform();
 	//	tx.AddRotation( 0, 0, lean * -0.1f );
