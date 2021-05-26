@@ -189,7 +189,7 @@ namespace Sandbox
 
 			drop = 0;
 
-			if(Pawn.WaterLevel.Fraction <= 1 && GroundEntity != null)
+			if(Pawn.WaterLevel.Fraction <= (1.0f/3.0f) && GroundEntity != null)
 			{
 				// Bleed off some speed, but if we have less than the bleed
 				//  threshold, bleed the threshold amount.
@@ -199,8 +199,8 @@ namespace Sandbox
 				drop = control * Time.Delta * frictionAmount;
 			}
             
-			if ( Pawn.WaterLevel.Fraction > 0 ) {
-				drop += speed*WaterFriction*Pawn.WaterLevel.Fraction*Time.Delta;
+			if ( Pawn.WaterLevel.Fraction > 0.0f ) {
+				drop += speed*WaterFriction*(Pawn.WaterLevel.Fraction*3)*Time.Delta;
 			}
 
 			// scale the velocity
